@@ -10,11 +10,13 @@ class QueryManager
     // Attributes
     /** @var HandlerInterface $oCacheHandler */
     private $oCacheHandler;
+    private $sPrefix;
 
     // Constructor
-    public function __construct(HandlerInterface $oCacheHandler)
+    public function __construct(HandlerInterface $oCacheHandler, $sPrefix = 'query_manager:')
     {
         $this->oCacheHandler = $oCacheHandler;
+        $this->sPrefix = $sPrefix;
     }
 
     public function fetchInto(
@@ -59,14 +61,14 @@ class QueryManager
 
     private function getKey($sQueryString, array $aQueryValues, $sKey)
     {
-        if ($sKey !== '') {
-            return $sKey;
+        if ($sKey === '') {
+            $sKey = md5(sprintf(
+                '%s:%s',
+                $sQueryString,
+                serialize($aQueryValues)
+            ));
         }
-        return md5(sprintf(
-            '%s:%s',
-            $sQueryString,
-            serialize($aQueryValues)
-        ));
+        return $this->sPrefix . $sKey;
     }
 
     private function mustExecuteQuery($sQueryString, array $aQueryValues, $sKey, $iTTL)
