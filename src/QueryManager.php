@@ -2,7 +2,7 @@
 namespace Asticode\QueryManager;
 
 use Asticode\CacheManager\Handler\HandlerInterface;
-use Asticode\ExtendedPDO\ExtendedPDO;
+use Aura\Sql\ExtendedPdoInterface;
 use PDO;
 
 class QueryManager
@@ -18,7 +18,7 @@ class QueryManager
     }
 
     public function fetchInto(
-        ExtendedPDO $oPDO,
+        ExtendedPdoInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
