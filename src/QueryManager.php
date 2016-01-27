@@ -19,7 +19,7 @@ class QueryManager
         $this->sPrefix = $sPrefix;
     }
 
-    public function fetchInto(
+    public function fetchAllInto(
         ExtendedPdoInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
@@ -56,7 +56,33 @@ class QueryManager
         }
 
         // Return
-        return $aItems;
+        return is_array($aItems) ? $aItems : [];
+    }
+
+    public function fetchOneInto(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchIntoClass,
+        $sFetchIntoCallable,
+        array $aFetchIntoArgs = [],
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        // Get items
+        $aItems = $this->fetchAllInto(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            $sFetchIntoClass,
+            $sFetchIntoCallable,
+            $aFetchIntoArgs,
+            $iTTL,
+            $sKey
+        );
+
+        // Return
+        return count($aItems) > 0 ? $aItems[0] : null;
     }
 
     private function getKey($sQueryString, array $aQueryValues, $sKey)
