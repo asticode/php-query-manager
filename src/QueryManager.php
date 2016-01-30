@@ -19,7 +19,58 @@ class QueryManager
         $this->sPrefix = $sPrefix;
     }
 
-    public function fetchInto(
+    public function fetchAllInto(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchIntoClass,
+        $sFetchIntoCallable,
+        array $aFetchIntoArgs = [],
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        // Return
+        return $this->fetchInto(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            $sFetchIntoClass,
+            $sFetchIntoCallable,
+            $aFetchIntoArgs,
+            false,
+            $iTTL,
+            $sKey
+        );
+    }
+
+    public function fetchOneInto(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchIntoClass,
+        $sFetchIntoCallable,
+        array $aFetchIntoArgs = [],
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        // Get items
+        $aItems = $this->fetchInto(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            $sFetchIntoClass,
+            $sFetchIntoCallable,
+            $aFetchIntoArgs,
+            true,
+            $iTTL,
+            $sKey
+        );
+
+        // Return
+        return count($aItems) > 0 ? $aItems[0] : null;
+    }
+
+    private function fetchInto(
         ExtendedPdoInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
@@ -64,33 +115,6 @@ class QueryManager
 
         // Return
         return is_array($aItems) ? $aItems : [];
-    }
-
-    public function fetchOneInto(
-        ExtendedPdoInterface $oPDO,
-        $sQueryString,
-        array $aQueryValues,
-        $sFetchIntoClass,
-        $sFetchIntoCallable,
-        array $aFetchIntoArgs = [],
-        $iTTL = -1,
-        $sKey = ''
-    ) {
-        // Get items
-        $aItems = $this->fetchInto(
-            $oPDO,
-            $sQueryString,
-            $aQueryValues,
-            $sFetchIntoClass,
-            $sFetchIntoCallable,
-            $aFetchIntoArgs,
-            true,
-            $iTTL,
-            $sKey
-        );
-
-        // Return
-        return count($aItems) > 0 ? $aItems[0] : null;
     }
 
     private function buildKey($sQueryString, array $aQueryValues, $sKey)
