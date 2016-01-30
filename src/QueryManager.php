@@ -19,13 +19,14 @@ class QueryManager
         $this->sPrefix = $sPrefix;
     }
 
-    public function fetchAllInto(
+    public function fetchInto(
         ExtendedPdoInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
         $sFetchIntoCallable,
         array $aFetchIntoArgs = [],
+        $bFetchOnlyFirstItem = false,
         $iTTL = -1,
         $sKey = ''
     ) {
@@ -43,10 +44,16 @@ class QueryManager
             // Loop through results
             $aItems = [];
             while ($oStmt->fetch()) {
+                // Add item
                 $aItems[] = call_user_func_array($sFetchIntoCallable, array_merge(
                     [$oDatabaseItem],
                     $aFetchIntoArgs
                 ));
+
+                // Fetch only first item
+                if ($bFetchOnlyFirstItem) {
+                    break;
+                }
             }
 
             // Store results in cache
@@ -70,13 +77,14 @@ class QueryManager
         $sKey = ''
     ) {
         // Get items
-        $aItems = $this->fetchAllInto(
+        $aItems = $this->fetchInto(
             $oPDO,
             $sQueryString,
             $aQueryValues,
             $sFetchIntoClass,
             $sFetchIntoCallable,
             $aFetchIntoArgs,
+            true,
             $iTTL,
             $sKey
         );
@@ -85,7 +93,7 @@ class QueryManager
         return count($aItems) > 0 ? $aItems[0] : null;
     }
 
-    private function getKey($sQueryString, array $aQueryValues, $sKey)
+    private function buildKey($sQueryString, array $aQueryValues, $sKey)
     {
         if ($sKey === '') {
             $sKey = md5(sprintf(
@@ -108,7 +116,7 @@ class QueryManager
             ];
         } else {
             // Get key
-            $sKey = $this->getKey($sQueryString, $aQueryValues, $sKey);
+            $sKey = $this->buildKey($sQueryString, $aQueryValues, $sKey);
 
             // Check cache
             $aItems = $this->oCacheHandler->get($sKey);
