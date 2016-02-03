@@ -29,6 +29,58 @@ class QueryManager
         $iTTL = -1,
         $sKey = ''
     ) {
+        // Return
+        return $this->fetchInto(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            $sFetchIntoClass,
+            $sFetchIntoCallable,
+            $aFetchIntoArgs,
+            false,
+            $iTTL,
+            $sKey
+        );
+    }
+
+    public function fetchOneInto(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchIntoClass,
+        $sFetchIntoCallable = '',
+        array $aFetchIntoArgs = [],
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        // Get items
+        $aItems = $this->fetchInto(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            $sFetchIntoClass,
+            $sFetchIntoCallable,
+            $aFetchIntoArgs,
+            true,
+            $iTTL,
+            $sKey
+        );
+
+        // Return
+        return count($aItems) > 0 ? $aItems[0] : null;
+    }
+
+    private function fetchInto(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchIntoClass,
+        $sFetchIntoCallable = '',
+        array $aFetchIntoArgs = [],
+        $bFetchOnlyFirstItem = false,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
         // Check if query must by executed
         list($bMustExecuteQuery, $sKey, $aItems) = $this->mustExecuteQuery($sQueryString, $aQueryValues, $sKey, $iTTL);
 
@@ -55,6 +107,11 @@ class QueryManager
                         $aFetchIntoArgs
                     ));
                 }
+
+                // Fetch only first item
+                if ($bFetchOnlyFirstItem) {
+                    break;
+                }
             }
 
             // Store results in cache
@@ -67,33 +124,7 @@ class QueryManager
         return is_array($aItems) ? $aItems : [];
     }
 
-    public function fetchOneInto(
-        ExtendedPdoInterface $oPDO,
-        $sQueryString,
-        array $aQueryValues,
-        $sFetchIntoClass,
-        $sFetchIntoCallable = '',
-        array $aFetchIntoArgs = [],
-        $iTTL = -1,
-        $sKey = ''
-    ) {
-        // Get items
-        $aItems = $this->fetchAllInto(
-            $oPDO,
-            $sQueryString,
-            $aQueryValues,
-            $sFetchIntoClass,
-            $sFetchIntoCallable,
-            $aFetchIntoArgs,
-            $iTTL,
-            $sKey
-        );
-
-        // Return
-        return count($aItems) > 0 ? $aItems[0] : null;
-    }
-
-    private function getKey($sQueryString, array $aQueryValues, $sKey)
+    private function buildKey($sQueryString, array $aQueryValues, $sKey)
     {
         if ($sKey === '') {
             $sKey = md5(sprintf(
@@ -116,7 +147,7 @@ class QueryManager
             ];
         } else {
             // Get key
-            $sKey = $this->getKey($sQueryString, $aQueryValues, $sKey);
+            $sKey = $this->buildKey($sQueryString, $aQueryValues, $sKey);
 
             // Check cache
             $aItems = $this->oCacheHandler->get($sKey);
