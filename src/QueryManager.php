@@ -24,7 +24,7 @@ class QueryManager
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
-        $sFetchIntoCallable,
+        $sFetchIntoCallable = '',
         array $aFetchIntoArgs = [],
         $iTTL = -1,
         $sKey = ''
@@ -35,18 +35,26 @@ class QueryManager
         // Query must be executed
         if ($bMustExecuteQuery) {
             // Prepare
-            $oDatabaseItem = new $sFetchIntoClass;
             $oStmt = $oPDO->prepare($sQueryString);
-            $oStmt->setFetchMode(PDO::FETCH_INTO, $oDatabaseItem);
+            if ($sFetchIntoCallable === '') {
+                $oStmt->setFetchMode(PDO::FETCH_CLASS, $sFetchIntoClass);
+            } else {
+                $oDatabaseItem = new $sFetchIntoClass;
+                $oStmt->setFetchMode(PDO::FETCH_INTO, $oDatabaseItem);
+            }
             $oStmt->execute($aQueryValues);
 
             // Loop through results
             $aItems = [];
-            while ($oStmt->fetch()) {
-                $aItems[] = call_user_func_array($sFetchIntoCallable, array_merge(
-                    [$oDatabaseItem],
-                    $aFetchIntoArgs
-                ));
+            while ($oRow = $oStmt->fetch()) {
+                if ($sFetchIntoCallable === '') {
+                    $aItems[] = $oRow;
+                } else {
+                    $aItems[] = call_user_func_array($sFetchIntoCallable, array_merge(
+                        [$oRow],
+                        $aFetchIntoArgs
+                    ));
+                }
             }
 
             // Store results in cache
@@ -64,7 +72,7 @@ class QueryManager
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
-        $sFetchIntoCallable,
+        $sFetchIntoCallable = '',
         array $aFetchIntoArgs = [],
         $iTTL = -1,
         $sKey = ''
