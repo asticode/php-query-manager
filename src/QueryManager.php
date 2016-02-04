@@ -10,12 +10,14 @@ class QueryManager
     // Attributes
     /** @var HandlerInterface $oCacheHandler */
     private $oCacheHandler;
+    private $bEnableCaching;
     private $sPrefix;
 
     // Constructor
-    public function __construct(HandlerInterface $oCacheHandler, $sPrefix = 'query_manager:')
+    public function __construct(HandlerInterface $oCacheHandler, $bEnableCaching = true, $sPrefix = 'query_manager:')
     {
         $this->oCacheHandler = $oCacheHandler;
+        $this->bEnableCaching = $bEnableCaching;
         $this->sPrefix = $sPrefix;
     }
 
@@ -138,7 +140,7 @@ class QueryManager
 
     private function mustExecuteQuery($sQueryString, array $aQueryValues, $sKey, $iTTL)
     {
-        if ($iTTL === -1) {
+        if (!$this->bEnableCaching || $iTTL === -1) {
             // Return
             return [
                 true,
