@@ -162,4 +162,9 @@ class QueryManager
             ];
         }
     }
+
+    public function delKey($sKey)
+    {
+        $this->oCacheHandler->del($this->buildKey('', [], $sKey));
+    }
 }
