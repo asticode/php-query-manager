@@ -52,6 +52,81 @@ class QueryManager
         return count($aItems) > 0 ? $aItems[0] : null;
     }
 
+    public function fetchAllAssoc(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        // Return
+        return $this->fetchAssoc(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            false,
+            $iTTL,
+            $sKey
+        );
+    }
+
+    public function fetchOneAssoc(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        return $this->fetchOne(
+            [$this, 'fetchAssoc'],
+            [
+                $oPDO,
+                $sQueryString,
+                $aQueryValues,
+                true,
+                $iTTL,
+                $sKey,
+            ]
+        );
+    }
+
+    private function fetchAssoc(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $bFetchOnlyFirstItem = false,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        return $this->fetchAll(
+            $sQueryString,
+            $aQueryValues,
+            $iTTL,
+            $sKey,
+            function() use ($oPDO, $sQueryString, $aQueryValues, $bFetchOnlyFirstItem) {
+                // Prepare
+                $oStmt = $oPDO->prepare($sQueryString);
+                $oStmt->setFetchMode(PDO::FETCH_ASSOC);
+                $oStmt->execute($aQueryValues);
+
+                // Loop through results
+                $aItems = [];
+                while ($oRow = $oStmt->fetch()) {
+                    // Get items
+                    $aItems[] = $oRow;
+
+                    // Fetch only first item
+                    if ($bFetchOnlyFirstItem) {
+                        break;
+                    }
+                }
+
+                // Return
+                return $aItems;
+            }
+        );
+    }
+
     public function fetchAllClass(
         ExtendedPdoInterface $oPDO,
         $sQueryString,
