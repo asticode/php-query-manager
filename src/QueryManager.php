@@ -21,12 +21,22 @@ class QueryManager
         $this->sPrefix = $sPrefix;
     }
 
+    public function fetchAllClass()
+    {
+
+    }
+
+    public function fetchOneClass()
+    {
+
+    }
+
     public function fetchAllInto(
         ExtendedPdoInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
-        $sFetchIntoCallable = '',
+        $sFetchIntoCallable,
         array $aFetchIntoArgs = [],
         $iTTL = -1,
         $sKey = ''
@@ -50,71 +60,41 @@ class QueryManager
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
-        $sFetchIntoCallable = '',
+        $sFetchIntoCallable,
         array $aFetchIntoArgs = [],
         $iTTL = -1,
         $sKey = ''
     ) {
-        // Get items
-        $aItems = $this->fetchInto(
-            $oPDO,
-            $sQueryString,
-            $aQueryValues,
-            $sFetchIntoClass,
-            $sFetchIntoCallable,
-            $aFetchIntoArgs,
-            true,
-            $iTTL,
-            $sKey
+        return $this->fetchOne(
+            [$this, 'fetchInto'],
+            [
+                $oPDO,
+                $sQueryString,
+                $aQueryValues,
+                $sFetchIntoClass,
+                $sFetchIntoCallable,
+                $aFetchIntoArgs,
+                true,
+                $iTTL,
+                $sKey,
+            ]
         );
-
-        // Return
-        return count($aItems) > 0 ? $aItems[0] : null;
     }
 
-    private function fetchInto(
-        ExtendedPdoInterface $oPDO,
+    private function fetchAll(
         $sQueryString,
         array $aQueryValues,
-        $sFetchIntoClass,
-        $sFetchIntoCallable = '',
-        array $aFetchIntoArgs = [],
-        $bFetchOnlyFirstItem = false,
-        $iTTL = -1,
-        $sKey = ''
+        $iTTL,
+        $sKey,
+        callable $cFetchAllClosure
     ) {
         // Check if query must by executed
         list($bMustExecuteQuery, $sKey, $aItems) = $this->mustExecuteQuery($sQueryString, $aQueryValues, $sKey, $iTTL);
 
         // Query must be executed
         if ($bMustExecuteQuery) {
-            // Prepare
-            $oStmt = $oPDO->prepare($sQueryString);
-            if ($sFetchIntoCallable === '') {
-                $oStmt->setFetchMode(PDO::FETCH_CLASS, $sFetchIntoClass);
-            } else {
-                $oDatabaseItem = new $sFetchIntoClass;
-                $oStmt->setFetchMode(PDO::FETCH_INTO, $oDatabaseItem);
-            }
-            $oStmt->execute($aQueryValues);
-
-            // Loop through results
-            $aItems = [];
-            while ($oRow = $oStmt->fetch()) {
-                if ($sFetchIntoCallable === '') {
-                    $aItems[] = $oRow;
-                } else {
-                    $aItems[] = call_user_func_array($sFetchIntoCallable, array_merge(
-                        [$oRow],
-                        $aFetchIntoArgs
-                    ));
-                }
-
-                // Fetch only first item
-                if ($bFetchOnlyFirstItem) {
-                    break;
-                }
-            }
+            // Fetch all
+            $aItems = call_user_func($cFetchAllClosure);
 
             // Store results in cache
             if ($iTTL >= 0) {
@@ -124,6 +104,53 @@ class QueryManager
 
         // Return
         return is_array($aItems) ? $aItems : [];
+    }
+
+    private function fetchOne(callable $cFetchAllClosure, array $aFetchAllArgs = [])
+    {
+        $aItems = call_user_func_array($cFetchAllClosure, $aFetchAllArgs);
+        return count($aItems) > 0 ? $aItems[0] : null;
+    }
+
+    private function fetchInto(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchIntoClass,
+        $sFetchIntoCallable,
+        array $aFetchIntoArgs = [],
+        $bFetchOnlyFirstItem = false,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        return $this->fetchAll(
+            $sQueryString,
+            $aQueryValues,
+            $iTTL,
+            $sKey,
+            function() use ($oPDO, $sQueryString, $aQueryValues, $sFetchIntoClass, $sFetchIntoCallable, $aFetchIntoArgs, $bFetchOnlyFirstItem) {
+                // Prepare
+                $oStmt = $oPDO->prepare($sQueryString);
+                $oDatabaseItem = new $sFetchIntoClass;
+                $oStmt->setFetchMode(PDO::FETCH_INTO, $oDatabaseItem);
+                $oStmt->execute($aQueryValues);
+
+                // Loop through results
+                $aItems = [];
+                while ($oStmt->fetch()) {
+                    // Get items
+                    $aItems[] = call_user_func_array($sFetchIntoCallable, array_merge(
+                        [$oDatabaseItem],
+                        $aFetchIntoArgs
+                    ));
+
+                    // Fetch only first item
+                    if ($bFetchOnlyFirstItem) {
+                        break;
+                    }
+                }
+            }
+        );
     }
 
     private function buildKey($sQueryString, array $aQueryValues, $sKey)
