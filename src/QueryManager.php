@@ -21,14 +21,115 @@ class QueryManager
         $this->sPrefix = $sPrefix;
     }
 
-    public function fetchAllClass()
-    {
+    private function fetchAll(
+        $sQueryString,
+        array $aQueryValues,
+        $iTTL,
+        $sKey,
+        callable $cFetchAllClosure
+    ) {
+        // Check if query must by executed
+        list($bMustExecuteQuery, $sKey, $aItems) = $this->mustExecuteQuery($sQueryString, $aQueryValues, $sKey, $iTTL);
 
+        // Query must be executed
+        if ($bMustExecuteQuery) {
+            // Fetch all
+            $aItems = call_user_func($cFetchAllClosure);
+
+            // Store results in cache
+            if ($iTTL >= 0) {
+                $this->oCacheHandler->set($sKey, $aItems, $iTTL);
+            }
+        }
+
+        // Return
+        return is_array($aItems) ? $aItems : [];
     }
 
-    public function fetchOneClass()
+    private function fetchOne(callable $cFetchAllClosure, array $aFetchAllArgs = [])
     {
+        $aItems = call_user_func_array($cFetchAllClosure, $aFetchAllArgs);
+        return count($aItems) > 0 ? $aItems[0] : null;
+    }
 
+    public function fetchAllClass(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchClass,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        // Return
+        return $this->fetchClass(
+            $oPDO,
+            $sQueryString,
+            $aQueryValues,
+            $sFetchClass,
+            false,
+            $iTTL,
+            $sKey
+        );
+    }
+
+    public function fetchOneClass(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchClass,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        return $this->fetchOne(
+            [$this, 'fetchClass'],
+            [
+                $oPDO,
+                $sQueryString,
+                $aQueryValues,
+                $sFetchClass,
+                true,
+                $iTTL,
+                $sKey,
+            ]
+        );
+    }
+
+    private function fetchClass(
+        ExtendedPdoInterface $oPDO,
+        $sQueryString,
+        array $aQueryValues,
+        $sFetchClass,
+        $bFetchOnlyFirstItem = false,
+        $iTTL = -1,
+        $sKey = ''
+    ) {
+        return $this->fetchAll(
+            $sQueryString,
+            $aQueryValues,
+            $iTTL,
+            $sKey,
+            function() use ($oPDO, $sQueryString, $aQueryValues, $sFetchClass, $bFetchOnlyFirstItem) {
+                // Prepare
+                $oStmt = $oPDO->prepare($sQueryString);
+                $oStmt->setFetchMode(PDO::FETCH_CLASS, $sFetchClass);
+                $oStmt->execute($aQueryValues);
+
+                // Loop through results
+                $aItems = [];
+                while ($oRow = $oStmt->fetch()) {
+                    // Get items
+                    $aItems[] = $oRow;
+
+                    // Fetch only first item
+                    if ($bFetchOnlyFirstItem) {
+                        break;
+                    }
+                }
+
+                // Return
+                return $aItems;
+            }
+        );
     }
 
     public function fetchAllInto(
@@ -81,37 +182,6 @@ class QueryManager
         );
     }
 
-    private function fetchAll(
-        $sQueryString,
-        array $aQueryValues,
-        $iTTL,
-        $sKey,
-        callable $cFetchAllClosure
-    ) {
-        // Check if query must by executed
-        list($bMustExecuteQuery, $sKey, $aItems) = $this->mustExecuteQuery($sQueryString, $aQueryValues, $sKey, $iTTL);
-
-        // Query must be executed
-        if ($bMustExecuteQuery) {
-            // Fetch all
-            $aItems = call_user_func($cFetchAllClosure);
-
-            // Store results in cache
-            if ($iTTL >= 0) {
-                $this->oCacheHandler->set($sKey, $aItems, $iTTL);
-            }
-        }
-
-        // Return
-        return is_array($aItems) ? $aItems : [];
-    }
-
-    private function fetchOne(callable $cFetchAllClosure, array $aFetchAllArgs = [])
-    {
-        $aItems = call_user_func_array($cFetchAllClosure, $aFetchAllArgs);
-        return count($aItems) > 0 ? $aItems[0] : null;
-    }
-
     private function fetchInto(
         ExtendedPdoInterface $oPDO,
         $sQueryString,
@@ -149,6 +219,9 @@ class QueryManager
                         break;
                     }
                 }
+
+                // Return
+                return $aItems;
             }
         );
     }
