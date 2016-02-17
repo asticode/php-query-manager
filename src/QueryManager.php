@@ -2,7 +2,6 @@
 namespace Asticode\QueryManager;
 
 use Asticode\CacheManager\Handler\HandlerInterface;
-use Aura\Sql\ExtendedPdoInterface;
 use PDO;
 
 class QueryManager
@@ -53,7 +52,7 @@ class QueryManager
     }
 
     public function fetchAllAssoc(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $iTTL = -1,
@@ -71,7 +70,7 @@ class QueryManager
     }
 
     public function fetchOneAssoc(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $iTTL = -1,
@@ -91,7 +90,7 @@ class QueryManager
     }
 
     private function fetchAssoc(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $bFetchOnlyFirstItem = false,
@@ -103,7 +102,7 @@ class QueryManager
             $aQueryValues,
             $iTTL,
             $sKey,
-            function() use ($oPDO, $sQueryString, $aQueryValues, $bFetchOnlyFirstItem) {
+            function () use ($oPDO, $sQueryString, $aQueryValues, $bFetchOnlyFirstItem) {
                 // Prepare
                 $oStmt = $oPDO->prepare($sQueryString);
                 $oStmt->setFetchMode(PDO::FETCH_ASSOC);
@@ -128,7 +127,7 @@ class QueryManager
     }
 
     public function fetchAllClass(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -148,7 +147,7 @@ class QueryManager
     }
 
     public function fetchOneClass(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -170,7 +169,7 @@ class QueryManager
     }
 
     private function fetchClass(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -183,7 +182,7 @@ class QueryManager
             $aQueryValues,
             $iTTL,
             $sKey,
-            function() use ($oPDO, $sQueryString, $aQueryValues, $sFetchClass, $bFetchOnlyFirstItem) {
+            function () use ($oPDO, $sQueryString, $aQueryValues, $sFetchClass, $bFetchOnlyFirstItem) {
                 // Prepare
                 $oStmt = $oPDO->prepare($sQueryString);
                 $oStmt->setFetchMode(PDO::FETCH_CLASS, $sFetchClass);
@@ -208,7 +207,7 @@ class QueryManager
     }
 
     public function fetchAllInto(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -232,7 +231,7 @@ class QueryManager
     }
 
     public function fetchOneInto(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -258,7 +257,7 @@ class QueryManager
     }
 
     private function fetchInto(
-        ExtendedPdoInterface $oPDO,
+        PDO $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -273,7 +272,15 @@ class QueryManager
             $aQueryValues,
             $iTTL,
             $sKey,
-            function() use ($oPDO, $sQueryString, $aQueryValues, $sFetchIntoClass, $sFetchIntoCallable, $aFetchIntoArgs, $bFetchOnlyFirstItem) {
+            function () use (
+                $oPDO,
+                $sQueryString,
+                $aQueryValues,
+                $sFetchIntoClass,
+                $sFetchIntoCallable,
+                $aFetchIntoArgs,
+                $bFetchOnlyFirstItem
+            ) {
                 // Prepare
                 $oStmt = $oPDO->prepare($sQueryString);
                 $oDatabaseItem = new $sFetchIntoClass;
