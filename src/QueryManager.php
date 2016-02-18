@@ -185,7 +185,7 @@ class QueryManager
             function () use ($oPDO, $sQueryString, $aQueryValues, $sFetchClass, $bFetchOnlyFirstItem) {
                 // Prepare
                 $oStmt = $oPDO->prepare($sQueryString);
-                $oStmt->setFetchMode(PDO::FETCH_CLASS, $sFetchClass);
+                $oStmt->setFetchMode(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, $sFetchClass);
                 $oStmt->execute($aQueryValues);
 
                 // Loop through results
