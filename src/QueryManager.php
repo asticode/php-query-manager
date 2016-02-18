@@ -52,7 +52,7 @@ class QueryManager
     }
 
     public function fetchAllAssoc(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $iTTL = -1,
@@ -70,7 +70,7 @@ class QueryManager
     }
 
     public function fetchOneAssoc(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $iTTL = -1,
@@ -90,7 +90,7 @@ class QueryManager
     }
 
     private function fetchAssoc(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $bFetchOnlyFirstItem = false,
@@ -127,7 +127,7 @@ class QueryManager
     }
 
     public function fetchAllClass(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -147,7 +147,7 @@ class QueryManager
     }
 
     public function fetchOneClass(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -169,7 +169,7 @@ class QueryManager
     }
 
     private function fetchClass(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -207,7 +207,7 @@ class QueryManager
     }
 
     public function fetchAllInto(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -231,7 +231,7 @@ class QueryManager
     }
 
     public function fetchOneInto(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -257,7 +257,7 @@ class QueryManager
     }
 
     private function fetchInto(
-        PDOInterface $oPDO,
+        $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
