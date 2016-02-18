@@ -2,6 +2,7 @@
 namespace Asticode\QueryManager;
 
 use Asticode\CacheManager\Handler\HandlerInterface;
+use Asticode\ExtendedPDO\PDOInterface;
 use PDO;
 
 class QueryManager
@@ -52,7 +53,7 @@ class QueryManager
     }
 
     public function fetchAllAssoc(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $iTTL = -1,
@@ -70,7 +71,7 @@ class QueryManager
     }
 
     public function fetchOneAssoc(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $iTTL = -1,
@@ -90,7 +91,7 @@ class QueryManager
     }
 
     private function fetchAssoc(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $bFetchOnlyFirstItem = false,
@@ -127,7 +128,7 @@ class QueryManager
     }
 
     public function fetchAllClass(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -147,7 +148,7 @@ class QueryManager
     }
 
     public function fetchOneClass(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -169,7 +170,7 @@ class QueryManager
     }
 
     private function fetchClass(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchClass,
@@ -207,7 +208,7 @@ class QueryManager
     }
 
     public function fetchAllInto(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -231,7 +232,7 @@ class QueryManager
     }
 
     public function fetchOneInto(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
@@ -257,7 +258,7 @@ class QueryManager
     }
 
     private function fetchInto(
-        PDO $oPDO,
+        PDOInterface $oPDO,
         $sQueryString,
         array $aQueryValues,
         $sFetchIntoClass,
