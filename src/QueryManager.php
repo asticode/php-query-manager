@@ -2,7 +2,6 @@
 namespace Asticode\QueryManager;
 
 use Asticode\CacheManager\Handler\HandlerInterface;
-use Asticode\ExtendedPDO\PDOInterface;
 use PDO;
 
 class QueryManager

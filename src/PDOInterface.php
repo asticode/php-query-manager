@@ -1,5 +1,5 @@
 <?php
-namespace Asticode\ExtendedPDO;
+namespace Asticode\QueryManager;
 
 interface PDOInterface
 {
