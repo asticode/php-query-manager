@@ -2,6 +2,7 @@
 namespace Asticode\QueryManager;
 
 use Asticode\CacheManager\Handler\HandlerInterface;
+use Exception;
 use PDO;
 
 class QueryManager
@@ -10,13 +11,19 @@ class QueryManager
     /** @var HandlerInterface $oCacheHandler */
     private $oCacheHandler;
     private $bEnableCaching;
+    private $bSilentCachingException;
     private $sPrefix;
 
     // Constructor
-    public function __construct(HandlerInterface $oCacheHandler, $bEnableCaching = true, $sPrefix = 'query_manager:')
-    {
+    public function __construct(
+        HandlerInterface $oCacheHandler,
+        $bEnableCaching = true,
+        $bSilentCachingException = true,
+        $sPrefix = 'query_manager:'
+    ) {
         $this->oCacheHandler = $oCacheHandler;
         $this->bEnableCaching = $bEnableCaching;
+        $this->bSilentCachingException = $bSilentCachingException;
         $this->sPrefix = $sPrefix;
     }
 
@@ -28,7 +35,12 @@ class QueryManager
         callable $cFetchAllClosure
     ) {
         // Check if query must by executed
-        list($bMustExecuteQuery, $sKey, $aItems) = $this->mustExecuteQuery($sQueryString, $aQueryValues, $sKey, $iTTL);
+        list($bMustExecuteQuery, $bMustStoreQuery, $sKey, $aItems) = $this->mustExecuteQuery(
+            $sQueryString,
+            $aQueryValues,
+            $sKey,
+            $iTTL
+        );
 
         // Query must be executed
         if ($bMustExecuteQuery) {
@@ -36,8 +48,14 @@ class QueryManager
             $aItems = call_user_func($cFetchAllClosure);
 
             // Store results in cache
-            if ($iTTL >= 0) {
-                $this->oCacheHandler->set($sKey, $aItems, $iTTL);
+            if ($bMustStoreQuery) {
+                try {
+                    $this->oCacheHandler->set($sKey, $aItems, $iTTL);
+                } catch (Exception $oException) {
+                    if (!$this->bSilentCachingException) {
+                        throw $oException;
+                    }
+                }
             }
         }
 
@@ -326,6 +344,7 @@ class QueryManager
             // Return
             return [
                 true,
+                false,
                 '',
                 null,
             ];
@@ -334,11 +353,20 @@ class QueryManager
             $sKey = $this->buildKey($sQueryString, $aQueryValues, $sKey);
 
             // Check cache
-            $aItems = $this->oCacheHandler->get($sKey);
+            try {
+                $aItems = $this->oCacheHandler->get($sKey);
+            } catch (Exception $oException) {
+                if ($this->bSilentCachingException) {
+                    $aItems = null;
+                } else {
+                    throw $oException;
+                }
+            }
 
             // Return
             return [
                 is_null($aItems),
+                true,
                 $sKey,
                 $aItems,
             ];
